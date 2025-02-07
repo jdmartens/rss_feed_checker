@@ -4,6 +4,19 @@ from datetime import datetime
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing import List
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    
+    # Your configuration variables here
+    feed_list: List[str]
+    dynamodb_table: str
+    sender_email: str
+    recipient_email: str
+
+settings = Settings()
 
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
