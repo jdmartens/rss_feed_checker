@@ -1,20 +1,24 @@
-import boto3
-import feedparser
-from datetime import datetime
 import os
+import logging
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
+import boto3
+import feedparser
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger()
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
-    
-    # Your configuration variables here
     feed_list: List[str]
     dynamodb_table: str
     sender_email: str
     recipient_email: str
+
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 settings = Settings()
 
@@ -22,9 +26,12 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
 ses = boto3.client('ses')
 
-def lambda_handler(event, context):    
+def lambda_handler(event, context):
+    logger.info("Lambda function started")    
     for feed_url in settings.feed_list:
+        logging.info(f"Checking feed: {feed_url}")
         check_feed(feed_url)
+    logger.info("Lambda function finished")
 
 def check_feed(feed_url):
     feed = feedparser.parse(feed_url)
@@ -37,12 +44,15 @@ def check_feed(feed_url):
             new_entries.append(entry)
 
     if new_entries:
+        logger.info(f"New entries found for feed: {feed_url}")
         send_email_notification(feed_url, new_entries)
         update_last_entry(feed_url, new_entries[0])
 
 def get_last_entry(feed_url):
     response = table.get_item(Key={'feed_url': feed_url})
-    return response.get('Item')
+    last_entry = response.get('Item')
+    logger.info(f"Last entry for feed {feed_url}: {last_entry}")
+    return last_entry
 
 def update_last_entry(feed_url, entry):
     table.put_item(Item={
@@ -51,12 +61,14 @@ def update_last_entry(feed_url, entry):
         'last_entry_id': entry.id,
         'last_entry_title': entry.title
     })
+    logger.info(f"Updated last entry for feed {feed_url} with entry {entry.id}")
 
 def send_email_notification(feed_url, new_entries):
     subject = f"New RSS entries for {feed_url}"
     body = "New entries:\n\n"
     for entry in new_entries:
         body += f"Title: {entry.title}\nLink: {entry.link}\n\n"
+    logger.info(f"Sending email notification for feed {feed_url} with {len(new_entries)} new entries")
 
     message = MIMEMultipart()
     message['Subject'] = subject
