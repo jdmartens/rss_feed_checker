@@ -5,6 +5,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List
+from dateutil import parser
 
 import boto3
 import feedparser
@@ -40,7 +41,8 @@ def check_feed(feed_url):
     new_entries = []
 
     for entry in feed.entries:
-        entry_date = datetime.strptime(entry.published, '%a, %d %b %Y %H:%M:%S %z')
+        print("$$$$ entry", entry)
+        entry_date = parser.parse(entry.published)
         entry_timestamp = int(entry_date.timestamp())
         if last_entry is None or entry_timestamp > int(datetime.fromisoformat(last_entry['last_check_date']).timestamp()):
             new_entries.append(entry)
@@ -83,8 +85,8 @@ def send_email_notification(feed_url, new_entries):
     message['To'] = os.environ['RECIPIENT_EMAIL']
     message.attach(MIMEText(body, 'plain'))
 
-    # ses.send_raw_email(
-    #     Source=message['From'],
-    #     Destinations=[message['To']],
-    #     RawMessage={'Data': message.as_string()}
-    # )
+    ses.send_raw_email(
+        Source=message['From'],
+        Destinations=[message['To']],
+        RawMessage={'Data': message.as_string()}
+    )
