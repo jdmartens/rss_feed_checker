@@ -28,11 +28,11 @@ table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
 ses = boto3.client('ses')
 
 def lambda_handler(event, context):
-    logger.info("Lambda function started")    
+    print("Lambda function started")    
     for feed_url in settings.feed_list:
         logging.info(f"Checking feed: {feed_url}")
         check_feed(feed_url)
-    logger.info("Lambda function finished")
+    print("Lambda function finished")
 
 def check_feed(feed_url):
     feed = feedparser.parse(feed_url)
@@ -41,18 +41,19 @@ def check_feed(feed_url):
 
     for entry in feed.entries:
         entry_date = datetime.strptime(entry.published, '%a, %d %b %Y %H:%M:%S %z')
-        if last_entry is None or entry_date > last_entry['last_check_date']:
+        entry_timestamp = int(entry_date.timestamp())
+        if last_entry is None or entry_timestamp > int(datetime.fromisoformat(last_entry['last_check_date']).timestamp()):
             new_entries.append(entry)
 
     if new_entries:
-        logger.info(f"New entries found for feed: {feed_url}")
+        print(f"New entries found for feed: {feed_url}")
         send_email_notification(feed_url, new_entries)
         update_last_entry(feed_url, new_entries[0])
 
 def get_last_entry(feed_url):
     response = table.get_item(Key={'feed_url': feed_url})
     last_entry = response.get('Item')
-    logger.info(f"Last entry for feed {feed_url}: {last_entry}")
+    print(f"Last entry for feed {feed_url}: {last_entry}")
     return last_entry
 
 def update_last_entry(feed_url, entry):
@@ -63,7 +64,7 @@ def update_last_entry(feed_url, entry):
         'last_entry_id': entry_id,
         'last_entry_title': entry.title
     })
-    logger.info(f"Updated last entry for feed {feed_url} with entry {entry_id}")
+    print(f"Updated last entry for feed {feed_url} with entry {entry_id}")
 
 def generate_id(entry):
     hash_input = entry.title or entry.link
@@ -74,7 +75,7 @@ def send_email_notification(feed_url, new_entries):
     body = "New entries:\n\n"
     for entry in new_entries:
         body += f"Title: {entry.title}\nLink: {entry.link}\n\n"
-    logger.info(f"Sending email notification for feed {feed_url} with {len(new_entries)} new entries")
+    print(f"Sending email notification for feed {feed_url} with {len(new_entries)} new entries")
 
     message = MIMEMultipart()
     message['Subject'] = subject
