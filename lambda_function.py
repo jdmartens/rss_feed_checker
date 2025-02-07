@@ -22,13 +22,8 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
 ses = boto3.client('ses')
 
-def lambda_handler(event, context):
-    rss_feeds = [
-        'https://example.com/feed1.xml',
-        'https://example.com/feed2.xml'
-    ]
-    
-    for feed_url in rss_feeds:
+def lambda_handler(event, context):    
+    for feed_url in settings.feed_list:
         check_feed(feed_url)
 
 def check_feed(feed_url):
