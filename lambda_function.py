@@ -1,5 +1,6 @@
 import os
 import logging
+import hashlib
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -55,13 +56,18 @@ def get_last_entry(feed_url):
     return last_entry
 
 def update_last_entry(feed_url, entry):
+    entry_id = entry.get('id') or generate_id(entry)
     table.put_item(Item={
         'feed_url': feed_url,
         'last_check_date': datetime.now().isoformat(),
-        'last_entry_id': entry.id,
+        'last_entry_id': entry_id,
         'last_entry_title': entry.title
     })
-    logger.info(f"Updated last entry for feed {feed_url} with entry {entry.id}")
+    logger.info(f"Updated last entry for feed {feed_url} with entry {entry_id}")
+
+def generate_id(entry):
+    hash_input = entry.title or entry.link
+    return hashlib.md5(hash_input.encode('utf-8')).hexdigest()
 
 def send_email_notification(feed_url, new_entries):
     subject = f"New RSS entries for {feed_url}"
@@ -76,8 +82,8 @@ def send_email_notification(feed_url, new_entries):
     message['To'] = os.environ['RECIPIENT_EMAIL']
     message.attach(MIMEText(body, 'plain'))
 
-    ses.send_raw_email(
-        Source=message['From'],
-        Destinations=[message['To']],
-        RawMessage={'Data': message.as_string()}
-    )
+    # ses.send_raw_email(
+    #     Source=message['From'],
+    #     Destinations=[message['To']],
+    #     RawMessage={'Data': message.as_string()}
+    # )
