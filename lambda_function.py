@@ -78,16 +78,26 @@ def send_email_notification(feed_url, new_entries):
     domain = parsed_url.netloc
 
     subject = "New RSS entries for {}".format(domain)
-    body = "New entries:\n\n"
+    body = "<h1>New entries:</h1><ul>"
     for entry in new_entries:
-        body += f"Title: {entry.title}\nLink: {entry.link}\n\n"
+        body += "<li>"
+        body += f"<h2>{entry.title}</h2>"
+        if 'summary' in entry:
+            body += f"<p>{entry.summary}</p>"
+        if 'author' in entry:
+            body += f"<p><strong>Author:</strong> {entry.author}</p>"
+        if 'media_content' in entry and entry.media_content:
+            body += f"<img src='{entry.media_content[0]['url']}' alt='Image' />"
+        body += f"<p><a href='{entry.link}'>Read more</a></p>"
+        body += "</li>"
+    body += "</ul>"
     print(f"Sending email notification for feed {feed_url} with {len(new_entries)} new entries")
 
-    message = MIMEMultipart()
+    message = MIMEMultipart("alternative")
     message['Subject'] = subject
     message['From'] = os.environ['SENDER_EMAIL']
     message['To'] = os.environ['RECIPIENT_EMAIL']
-    message.attach(MIMEText(body, 'plain'))
+    message.attach(MIMEText(body, 'html'))
 
     ses.send_raw_email(
         Source=message['From'],
