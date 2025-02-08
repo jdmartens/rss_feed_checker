@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List
 from dateutil import parser
+from urllib.parse import urlparse
 
 import boto3
 import feedparser
@@ -73,7 +74,10 @@ def generate_id(entry):
     return hashlib.md5(hash_input.encode('utf-8')).hexdigest()
 
 def send_email_notification(feed_url, new_entries):
-    subject = f"New RSS entries for {feed_url}"
+    parsed_url = urlparse(feed_url)
+    domain = parsed_url.netloc
+
+    subject = "New RSS entries for {}".format(domain)
     body = "New entries:\n\n"
     for entry in new_entries:
         body += f"Title: {entry.title}\nLink: {entry.link}\n\n"
