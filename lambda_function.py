@@ -103,7 +103,8 @@ def send_email_notification(feed_url, new_entries):
                 image_url = link['href']
                 break
         if image_url:
-            body += f"<img src='{image_url}' alt='Image' />"
+            # Style the image to reduce its size in the email
+            body += f"<img src='{image_url}' alt='Image' style='max-width: 300px; height: auto;' />"
         body += f"<p><a href='{entry.link}'>Read more</a></p>"
         body += "</li>"
     body += "</ul>"
