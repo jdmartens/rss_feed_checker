@@ -9,6 +9,7 @@ from dateutil import parser
 from urllib.parse import urlparse
 
 import boto3
+from bs4 import BeautifulSoup
 import feedparser
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -91,7 +92,6 @@ def send_email_notification(feed_url, new_entries):
             author = entry.author
         elif 'creator' in entry:
             author = entry.creator
-        
         if author:
             body += f"<p><strong>Author:</strong> {author}</p>"
         image_url = None
@@ -105,6 +105,14 @@ def send_email_notification(feed_url, new_entries):
         if image_url:
             # Style the image to reduce its size in the email
             body += f"<img src='{image_url}' alt='Image' style='max-width: 300px; height: auto;' />"
+        # Parse extended description
+        extended_description = ""
+        if 'content' in entry and entry.content:
+            content = entry.content[0].value if isinstance(entry.content, list) else entry.content
+            soup = BeautifulSoup(content, 'html.parser')
+            extended_description = soup.get_text()[:500] + "..." if len(soup.get_text()) > 500 else soup.get_text()
+        if extended_description:
+            body += f"<p>{extended_description}</p>"
         body += f"<p><a href='{entry.link}'>Read more</a></p>"
         body += "</li>"
     body += "</ul>"
