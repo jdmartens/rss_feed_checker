@@ -86,8 +86,16 @@ def send_email_notification(feed_url, new_entries):
             body += f"<p>{entry.summary}</p>"
         if 'author' in entry:
             body += f"<p><strong>Author:</strong> {entry.author}</p>"
-        if 'media_content' in entry and entry.media_content:
-            body += f"<img src='{entry.media_content[0]['url']}' alt='Image' />"
+        image_url = None
+        for link in entry.links:
+            if link.get('type') and link['type'].startswith('image/'):
+                image_url = link['href']
+                break
+            elif link.get('rel') == 'enclosure' and link['href'].lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
+                image_url = link['href']
+                break
+        if image_url:
+            body += f"<img src='{image_url}' alt='Image' />"
         body += f"<p><a href='{entry.link}'>Read more</a></p>"
         body += "</li>"
     body += "</ul>"
