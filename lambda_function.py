@@ -84,8 +84,16 @@ def send_email_notification(feed_url, new_entries):
         body += f"<h2>{entry.title}</h2>"
         if 'summary' in entry:
             body += f"<p>{entry.summary}</p>"
-        if 'author' in entry:
-            body += f"<p><strong>Author:</strong> {entry.author}</p>"
+        author = None
+        if 'authors' in entry and entry.authors:
+            author = ', '.join([a['name'] for a in entry.authors if 'name' in a])
+        elif 'author' in entry:
+            author = entry.author
+        elif 'creator' in entry:
+            author = entry.creator
+        
+        if author:
+            body += f"<p><strong>Author:</strong> {author}</p>"
         image_url = None
         for link in entry.links:
             if link.get('type') and link['type'].startswith('image/'):
