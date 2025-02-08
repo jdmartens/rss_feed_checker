@@ -104,13 +104,13 @@ def send_email_notification(feed_url, new_entries):
                 break
         if image_url:
             # Style the image to reduce its size in the email
-            body += f"<img src='{image_url}' alt='Image' style='max-width: 300px; height: auto;' />"
+            body += f"<img src='{image_url}' alt='Image' style='max-width: 500px; height: auto;' />"
         # Parse extended description
         extended_description = ""
         if 'content' in entry and entry.content:
             content = entry.content[0].value if isinstance(entry.content, list) else entry.content
             soup = BeautifulSoup(content, 'html.parser')
-            extended_description = soup.get_text()[:500] + "..." if len(soup.get_text()) > 500 else soup.get_text()
+            extended_description = soup.get_text()[:1000] + "..." if len(soup.get_text()) > 1000 else soup.get_text()
         if extended_description:
             body += f"<p>{extended_description}</p>"
         body += f"<p><a href='{entry.link}'>Read more</a></p>"
