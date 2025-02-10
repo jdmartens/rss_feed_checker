@@ -79,7 +79,7 @@ def send_email_notification(feed_url, new_entries):
     domain = parsed_url.netloc
 
     subject = "New RSS entries for {}".format(domain)
-    body = "<h1>New entries:</h1><ul>"
+    body = '<h1>New entries:</h1><ul style="list-style-type: none;">'
     for entry in new_entries:
         body += "<li>"
         body += f"<h2>{entry.title}</h2>"
@@ -91,7 +91,8 @@ def send_email_notification(feed_url, new_entries):
         elif 'author' in entry:
             author = entry.author
         elif 'creator' in entry:
-            author = entry.creator
+          print("cr")
+          author = entry.creator.strip('<![CDATA[').strip(']]>')
         if author:
             body += f"<p><strong>Author:</strong> {author}</p>"
         image_url = None
