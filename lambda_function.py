@@ -82,19 +82,6 @@ def send_email_notification(feed_url, new_entries):
     body = '<h1>New entries:</h1><ul style="list-style-type: none;">'
     for entry in new_entries:
         body += "<li>"
-        body += f"<h2>{entry.title}</h2>"
-        if 'summary' in entry:
-            body += f"<p>{entry.summary}</p>"
-        author = None
-        if 'authors' in entry and entry.authors:
-            author = ', '.join([a['name'] for a in entry.authors if 'name' in a])
-        elif 'author' in entry:
-            author = entry.author
-        elif 'creator' in entry:
-          print("cr")
-          author = entry.creator.strip('<![CDATA[').strip(']]>')
-        if author:
-            body += f"<p><strong>Author:</strong> {author}</p>"
         image_url = None
         for link in entry.links:
             if link.get('type') and link['type'].startswith('image/'):
@@ -106,6 +93,9 @@ def send_email_notification(feed_url, new_entries):
         if image_url:
             # Style the image to reduce its size in the email
             body += f"<img src='{image_url}' alt='Image' style='max-width: 500px; height: auto;' />"
+        body += f"<h2>{entry.title}</h2>"
+        if 'summary' in entry:
+            body += f"<p>{entry.summary}</p>"
         # Parse extended description
         extended_description = ""
         if 'content' in entry and entry.content:
@@ -114,6 +104,15 @@ def send_email_notification(feed_url, new_entries):
             extended_description = soup.get_text()[:1000] + "..." if len(soup.get_text()) > 1000 else soup.get_text()
         if extended_description:
             body += f"<p>{extended_description}</p>"
+        author = None
+        if 'authors' in entry and entry.authors:
+            author = ', '.join([a['name'] for a in entry.authors if 'name' in a])
+        elif 'author' in entry:
+            author = entry.author
+        elif 'creator' in entry:
+          author = entry.creator.strip('<![CDATA[').strip(']]>')
+        if author:
+            body += f"<p><strong>Author:</strong> {author}</p>"
         body += f"<p><a href='{entry.link}'>Read more</a></p>"
         body += "</li>"
     body += "</ul>"
