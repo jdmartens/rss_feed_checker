@@ -4,3 +4,4 @@ feed_layer
 bs4_layer
 requirements.txt
 .DS_Store
+*.zip
